@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="shortcut icon" href="favicon.ico" type="image/x-icon">
+    <title>Sepolia Faucet</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f4f7f6;
+        }
+        
+        .container {
+            text-align: center;
+            background-color: white;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        }
+        
+        h1 {
+            color: #333;
+        }
+        
+        p {
+            color: #666;
+            margin-bottom: 25px;
+        }
+        
+        input[type="text"] {
+            width: 400px;
+            padding: 12px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            font-size: 16px;
+            margin-bottom: 20px;
+        }
+        
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 6px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+        
+        button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+        
+        #messageArea {
+            margin-top: 20px;
+            font-size: 14px;
+            min-height: 20px;
+        }
+        
+        .success {
+            color: #28a745;
+        }
+        
+        .error {
+            color: #dc3545;
+        }
+        
+        a {
+            color: #007bff;
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Sepolia Testnet Faucet</h1>
+        <p>Enter your wallet address to receive 0.01 Sepolia ETH.</p>
+        
+        <input type="text" id="recipientAddress" placeholder="0x...">
+        <br>
+        <button id="requestButton">Get ETH</button>
+
+        <div id="messageArea"></div>
+    </div>
+
+    <script>
+        const requestButton = document.getElementById('requestButton');
+        const recipientAddressInput = document.getElementById('recipientAddress');
+        const messageArea = document.getElementById('messageArea');
+
+        // The URL of backend server
+        const backendUrl = '/api/request-funds';
+
+        requestButton.addEventListener('click', async () => {
+            const recipient = recipientAddressInput.value.trim();
+
+            if (!recipient) {
+                messageArea.className = 'error';
+                messageArea.textContent = 'Please enter a wallet address.';
+                return;
+            }
+
+            // --- UI Loading State ---
+            requestButton.disabled = true;
+            requestButton.textContent = 'Processing...';
+            messageArea.className = '';
+            messageArea.textContent = 'Sending request to the server...';
+
+            try {
+                const response = await fetch(backendUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ recipient: recipient }),
+                });
+
+                const data = await response.json();
+                if (!response.ok) {
+                    throw new Error(data.error || 'Something went wrong on the server.');
+                }
+                
+                // --- Success ---
+                messageArea.className = 'success';
+                const explorerLink = `https://sepolia.etherscan.io/tx/${data.txHash}`;
+                messageArea.innerHTML = `Success! Funds sent. <a href="${explorerLink}" target="_blank">View on Etherscan</a>`;
+            } catch (error) {
+                // --- Error ---
+                messageArea.className = 'error';
+                messageArea.textContent = `Error: ${error.message}`;
+            } finally {
+                // --- Reset UI State ---
+                requestButton.disabled = false;
+                requestButton.textContent = 'Get ETH';
+            }
+        });
+    </script>
+</body>
+</html>
