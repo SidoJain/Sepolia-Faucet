@@ -128,17 +128,38 @@
 
                 const data = await response.json();
                 if (!response.ok) {
-                    throw new Error(data.error || 'Something went wrong on the server.');
+                    // We throw an error with the data so it can be caught below.
+                    const error = new Error('Server responded with an error');
+                    error.data = data;
+                    throw error;
                 }
                 
                 // --- Success ---
                 messageArea.className = 'success';
                 const explorerLink = `https://sepolia.etherscan.io/tx/${data.txHash}`;
-                messageArea.innerHTML = `Success! Funds sent. <a href="${explorerLink}" target="_blank">View on Etherscan</a>`;
+                messageArea.innerHTML = `
+                    <strong>${data.message}</strong><br>
+                    <a href="${explorerLink}" target="_blank">View on Etherscan</a>
+                    <p style="font-size: 12px; color: #555; margin-top: 10px;">
+                        <em>Note: ${data.note}</em>
+                    </p>
+                `;
+
             } catch (error) {
                 // --- Error ---
                 messageArea.className = 'error';
-                messageArea.textContent = `Error: ${error.message}`;
+                
+                let errorMessage = `Error: ${error.message}`;
+                // Check if we attached our custom data to the error object
+                if (error.data && error.data.error) {
+                    errorMessage = `Error: ${error.data.error}`;
+                    if (error.data.waitTime) {
+                        errorMessage += ` Please wait ${error.data.waitTime}.`;
+                    }
+                }
+                
+                messageArea.textContent = errorMessage;
+
             } finally {
                 // --- Reset UI State ---
                 requestButton.disabled = false;
