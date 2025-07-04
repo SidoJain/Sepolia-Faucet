@@ -164,8 +164,7 @@ export default async function handler(req, res) {
         
         res.status(200).json({
             message: 'Success! 0.01 Sepolia ETH has been sent.',
-            txHash: receipt.hash,
-            note: "Your transaction is complete. On Etherscan, you may need to check the 'Internal Txns' tab to see the transfer from the faucet contract to your wallet."
+            txHash: receipt.hash
         });
 
     } catch (error) {
